@@ -3,6 +3,7 @@ import csv
 import random
 import string
 import time
+import os
 
 class Card:
     suits = ["spades",
@@ -22,13 +23,14 @@ class Card:
         self.suit = s
 cardDeck = []
 
-#card deck
+#add all possible cards to deck
 for suit in Card.suits:
     for card in Card.values:
         cardDeck.append(Card(card, suit))
 
 random.shuffle(cardDeck)
 
+#Hand value
 playerHand = []
 dealerHand = []
 
@@ -61,21 +63,31 @@ def Hit():
     cardDeck.pop(0)
     return cardChoice
 
+def print_game_status(playerHandValue, dealerHandValue):
+    os.system('cls' if os.name == 'nt' else 'clear')
+    PrintHand(dealerHand, "dealer")
+    PrintHand(playerHand, "player")
+    print("player handvalue: " + str(playerHandValue))
+    print("dealer handvalue: " + str(dealerHandValue))
+
+#starting cards
 playerHand.append(Hit())
 dealerHand.append(Hit())
 playerHand.append(Hit())
 
 gameRunning = True
 
+#main game loop
 while gameRunning:
     playerActive = True
     playerBust = False
     playerHandValue = 0
+    
+    #player logic & moves
     while playerActive:
         playerHandValue = CalculateHandValue(playerHand)
-        PrintHand(dealerHand, "dealer")
-        PrintHand(playerHand, "player")
-        print("player handvalue: " + str(playerHandValue))
+        dealerHandValue = CalculateHandValue(dealerHand)
+        print_game_status(playerHandValue, dealerHandValue)
         print("(H)it or (S)tand")
         playerChoice = ""
         while playerChoice != "h" and playerChoice != "s":
@@ -86,36 +98,41 @@ while gameRunning:
             playerHand.append(Hit())
         playerHandValue = CalculateHandValue(playerHand)
         if playerHandValue > 21:
-            print("Player busten")
+            print("Player busted")
+            playerBust = True
             playerActive = False
-    # P AI!!!!
+  
+    #Dealer logic
     print("Dealers turn")
     dealerActive = True
     while dealerActive:
-        PrintHand(dealerHand, "dealer")
-        PrintHand(playerHand, "player")
+        playerHandValue = CalculateHandValue(playerHand)
         dealerHandValue = CalculateHandValue(dealerHand)
-        if dealerHandValue < playerHandValue and not playerBust:
-            if dealerHandValue > 16:
-                dealerActive = False
-            else:
-                dealerHand.append(Hit())
-                time.sleep(0.5)
+        print_game_status(playerHandValue, dealerHandValue)
+        if dealerHandValue < 17:
+            dealerHand.append(Hit())
+            time.sleep(0.5)
         else:
             if dealerHandValue > 21:
                 print("Dealer busted!")
                 dealerActive = False
             else:
                 dealerActive = False
+    dealerBust = (dealerHandValue > 21)
+    
+    #Win logic
     if playerHandValue == dealerHandValue:
         print("Tie")
         gameRunning = False
-    elif playerHandValue > dealerHandValue and not playerBust:
+    elif (playerHandValue > dealerHandValue and not playerBust) or (dealerBust and not playerBust):
         print("Player wins")
         gameRunning = False
-    elif dealerHandValue > playerHandValue and not playerBust:
-        print("Player wins")
+    elif (dealerHandValue > playerHandValue and not dealerBust) or (playerBust and not dealerBust):
+        print("Dealer wins")
         gameRunning = False
+    else:
+        gameRunning = False
+        print("Tie")
 
 
     
